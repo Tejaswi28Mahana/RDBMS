@@ -1,0 +1,125 @@
+      *Hr Management System*
+
+CREATE DATABASE-
+  CREATE DATABASE db_hrmanagementapp
+
+
+CREATE TABLES-
+  CREATE TABLE Departments (
+    DepartmentID INT PRIMARY KEY,
+    DepartmentName VARCHAR(100),
+    ManagerID INT
+);
+
+  CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    Email VARCHAR(100),
+    Phone VARCHAR(15),
+    HireDate DATE,
+    DepartmentID INT,
+    ManagerID INT,
+    Salary DECIMAL(10, 2),
+    FOREIGN KEY (DepartmentID) REFERENCES Departments(DepartmentID),
+    FOREIGN KEY (ManagerID) REFERENCES Employees(EmployeeID)
+);
+
+  CREATE TABLE PerformanceReviews (
+    ReviewID INT PRIMARY KEY,
+    EmployeeID INT,
+    ReviewDate DATE,
+    PerformanceScore VARCHAR(20) CHECK (PerformanceScore IN ('Excellent', 'Good', 'Average', 'Poor')),
+    Comments TEXT,
+    FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
+);
+
+  CREATE TABLE Payroll (
+    PayrollID INT PRIMARY KEY,
+    EmployeeID INT,
+    PaymentDate DATE,
+    Amount DECIMAL(10, 2),
+    PaymentMethod VARCHAR(50) CHECK (PaymentMethod IN ('Bank Transfer', 'Check')),
+    FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID)
+);
+
+
+INSERT VALUES INTO TABLES-
+  INSERT INTO Departments (DepartmentID, DepartmentName, ManagerID) VALUES
+  (1, 'Sales', 101),
+  (2, 'Marketing', 102),
+  (3, 'HR', 103);
+
+  INSERT INTO Employees (EmployeeID, FirstName, LastName, Email, Phone, HireDate, DepartmentID, ManagerID, Salary) VALUES
+  (101, 'John', 'Doe', 'johndoe@example.com', '123-456-7890', '2022-01-15', 1, NULL, 75000),
+  (102, 'Jane', 'Smith', 'janesmith@example.com', '123-456-7891', '2022-03-20', 2, NULL, 80000),
+  (103, 'Emily', 'Johnson', 'emilyj@example.com', '123-456-7892', '2021-05-10', 3, NULL, 72000),
+  (104, 'Tom', 'Brown', 'tombrown@example.com', '123-456-7893', '2023-06-25', 1, 101, 65000),
+  (105, 'Rachel', 'Davis', 'racheldavis@example.com', '123-456-7894', '2023-08-10', 2, 102, 70000),
+  (106, 'Michael', 'Wilson', 'michaelw@example.com', '123-456-7895', '2023-10-30', 3, 103, 73000);
+
+  INSERT INTO PerformanceReviews (ReviewID, EmployeeID, ReviewDate, PerformanceScore, Comments) VALUES
+  (1, 101, '2023-01-15', 'Excellent', 'Outstanding performance throughout the year'),
+  (2, 102, '2023-02-20', 'Good', 'Good performance with some areas for improvement'),
+  (3, 103, '2023-03-05', 'Average', 'Satisfactory performance, needs more consistency'),
+  (4, 104, '2023-09-10', 'Excellent', 'Exceeded expectations in sales and leadership'),
+  (5, 105, '2023-11-15', 'Good', 'Consistent work but needs to enhance creativity'),
+  (6, 106, '2023-12-01', 'Good', 'Solid performance, could improve teamwork');
+
+  INSERT INTO Payroll (PayrollID, EmployeeID, PaymentDate, Amount, PaymentMethod) VALUES
+  (1, 101, '2023-01-01', 5000, 'Bank Transfer'),
+  (2, 102, '2023-01-01', 5500, 'Check'),
+  (3, 103, '2023-01-01', 6000, 'Bank Transfer'),
+  (4, 104, '2023-09-01', 4000, 'Check'),
+  (5, 105, '2023-09-01', 4500, 'Bank Transfer'),
+  (6, 106, '2023-12-01', 4700, 'Bank Transfer');
+
+
+Questions-
+1. Retrieve the names and contact details of employees hired after January 1, 2023?
+Ans. SELECT FirstName, LastName, Email, Phone FROM Employees WHERE HireDate > '2023-01-01';
+
+2. Find the total payroll amount paid to each department?
+Ans. SELECT d.DepartmentName, SUM(p.Amount) AS TotalPayroll FROM Payroll p
+     JOIN Employees e ON p.EmployeeID = e.EmployeeID
+     JOIN Departments d ON e.DepartmentID = d.DepartmentID
+     GROUP BY d.DepartmentName;
+
+3. List all employees who have not been assigned a manager?
+Ans. SELECT FirstName, LastName, Email FROM Employees WHERE ManagerID IS NULL;
+
+4. Retrieve the highest salary in each department along with the employee’s name?
+Ans. SELECT d.DepartmentName, e.FirstName, e.LastName, MAX(e.Salary) AS HighestSalary FROM Employees e
+     JOIN Departments d ON e.DepartmentID = d.DepartmentID
+     GROUP BY d.DepartmentName, e.FirstName, e.LastName;
+
+5. Find the most recent performance review for each employee?
+Ans. SELECT e.FirstName, e.LastName, pr.ReviewDate, pr.PerformanceScore, pr.Comments FROM PerformanceReviews pr
+     JOIN Employees e ON pr.EmployeeID = e.EmployeeID
+     WHERE pr.ReviewDate = (SELECT MAX(ReviewDate) FROM PerformanceReviews WHERE EmployeeID = e.EmployeeID
+);
+
+6. Count the number of employees in each department?
+Ans. SELECT d.DepartmentName, COUNT(e.EmployeeID) AS EmployeeCount FROM Employees e
+     JOIN Departments d ON e.DepartmentID = d.DepartmentID
+     GROUP BY d.DepartmentName;
+
+7. List all employees who have received a performance score of "Excellent."?
+Ans. SELECT e.FirstName, e.LastName, pr.PerformanceScore FROM PerformanceReviews pr
+     JOIN Employees e ON pr.EmployeeID = e.EmployeeID
+     WHERE pr.PerformanceScore = 'Excellent';
+
+8. Identify the most frequently used payment method in payroll?
+Ans. SELECT PaymentMethod, COUNT(*) AS UsageCount FROM Payroll
+     GROUP BY PaymentMethod
+     ORDER BY UsageCount DESC
+     LIMIT 1;
+
+9. Retrieve the top 5 highest-paid employees along with their departments?
+Ans. SELECT e.FirstName, e.LastName, e.Salary, d.DepartmentName FROM Employees e
+     JOIN Departments d ON e.DepartmentID = d.DepartmentID
+     ORDER BY e.Salary DESC
+     LIMIT 5;
+
+10. Show details of all employees who report directly to a specific manager (e.g., ManagerID = 101)?
+Ans. SELECT e.FirstName, e.LastName, e.Email, e.Phone FROM Employees e WHERE e.ManagerID = 101;

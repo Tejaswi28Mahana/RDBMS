@@ -1,0 +1,128 @@
+       *Ride Application*
+ 
+CREATE DATABASE-
+ CREATE DATABASE db_rideheailing
+
+
+CREATE TABLES-
+ CREATE TABLE Drivers (
+    DriverID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    Phone VARCHAR(15),
+    City VARCHAR(50),
+    VehicleType VARCHAR(20),
+    Rating DECIMAL(2,1) CHECK (Rating BETWEEN 0 AND 5)
+);
+
+ CREATE TABLE Riders (
+    RiderID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    Phone VARCHAR(15),
+    City VARCHAR(50),
+    JoinDate DATE
+);
+
+ CREATE TABLE Rides (
+    RideID INT PRIMARY KEY,
+    RiderID INT,
+    DriverID INT,
+    RideDate DATE,
+    PickupLocation VARCHAR(100),
+    DropLocation VARCHAR(100),
+    Distance DECIMAL(5,2),
+    Fare DECIMAL(6,2),
+    RideStatus VARCHAR(20) CHECK (RideStatus IN ('Completed', 'Cancelled', 'Ongoing')),
+    FOREIGN KEY (RiderID) REFERENCES Riders(RiderID),
+    FOREIGN KEY (DriverID) REFERENCES Drivers(DriverID)
+);
+
+ CREATE TABLE Payments (
+    PaymentID INT PRIMARY KEY,
+    RideID INT,
+    PaymentMethod VARCHAR(20) CHECK (PaymentMethod IN ('Card', 'Cash', 'Wallet')),
+    Amount DECIMAL(8,2),
+    PaymentDate DATE,
+    FOREIGN KEY (RideID) REFERENCES Rides(RideID)
+);
+
+
+INSERT VALUES INTO TABLES-
+ INSERT INTO Drivers (DriverID, FirstName, LastName, Phone, City, VehicleType, Rating) VALUES
+ (1, 'Amit', 'Sharma', '9876543210', 'Mumbai', 'Sedan', 4.5),
+ (2, 'Priya', 'Verma', '8765432109', 'Delhi', 'SUV', 4.8),
+ (3, 'Rajesh', 'Kumar', '7654321098', 'Bangalore', 'Hatchback', 4.2),
+ (4, 'Sahil', 'Gupta', '6543210987', 'Chennai', 'Sedan', 4.7),
+ (5, 'Vikram', 'Singh', '5432109876', 'Hyderabad', 'Hatchback', 4.3);
+
+INSERT INTO Riders (RiderID, FirstName, LastName, Phone, City, JoinDate) VALUES
+(1, 'Aarav', 'Mehta', '9876543210', 'Mumbai', '2023-01-15'),
+(2, 'Sanya', 'Kapoor', '8765432109', 'Delhi', '2022-11-20'),
+(3, 'Rahul', 'Sharma', '7654321098', 'Bangalore', '2023-02-05'),
+(4, 'Neha', 'Ray', '6543210987', 'Chennai', '2021-09-10'),
+(5, 'Vikas', 'Singh', '5432109876', 'Hyderabad', '2024-03-25');
+
+INSERT INTO Rides (RideID, RiderID, DriverID, RideDate, PickupLocation, DropLocation, Distance, Fare, RideStatus) VALUES
+(1, 1, 2, '2025-04-01', 'Connaught Place, Delhi', 'Airport, Delhi', 15.5, 350.00, 'Completed'),
+(2, 3, 4, '2025-04-02', 'MG Road, Bangalore', 'Electronic City, Bangalore', 22.3, 500.00, 'Completed'),
+(3, 5, 1, '2025-04-03', 'Charminar, Hyderabad', 'Gachibowli, Hyderabad', 18.7, 400.00, 'Cancelled'),
+(4, 2, 3, '2025-04-04', 'Chennai Central', 'Anna Nagar, Chennai', 12.2, 250.00, 'Ongoing'),
+(5, 4, 5, '2025-04-05', 'Bandra, Mumbai', 'Nariman Point, Mumbai', 10.8, 300.00, 'Ongoing');
+
+INSERT INTO Payments (PaymentID, RideID, PaymentMethod, Amount, PaymentDate) VALUES
+(1, 1, 'Card', 350.00, '2022-06-01'),
+(2, 2, 'Cash', 500.00, '2024-04-02'),
+(3, 3, 'Wallet', 400.00, '2025-04-03'),
+(4, 4, 'Card', 250.00, '2023-09-04'),
+(5, 5, 'Cash', 300.00, '2025-04-05');
+
+
+Questions-
+1. Retrieve the names and contact details of all drivers with a rating of 4.5 or higher?
+Ans. SELECT FirstName, LastName, Phone, City FROM Drivers WHERE Rating >= 4.5;
+
+2. Find the total number of rides completed by each driver?
+Ans. SELECT DriverID, COUNT(*) AS TotalCompletedRides FROM Ride WHERE RideStatus = 'Completed' GROUP BY DriverID;
+
+3. List all riders who have never booked a ride?
+Ans. SELECT Riders.RiderID, Riders.FirstName, Riders.LastName, Riders.Phone, Riders.City FROM Riders LEFT JOIN Rides ON Riders.RiderID = Rides.RiderID WHERE Rides.RideID IS NULL;
+
+4. Calculate the total earnings of each driver from completed rides?
+Ans. SELECT DriverID, SUM(Fare) AS TotalEarnings FROM Rides WHERE RideStatus = 'Completed' GROUP BY DriverID;
+
+5. Retrieve the most recent ride for each rider?
+Ans. SELECT R1.RiderID, R1.RideID, R1.RideDate, R1.PickupLocation, R1.DropLocation, R1.Distance, R1.Fare, R1.RideStatus FROM Rides R1
+     WHERE R1.RideDate = (
+       SELECT MAX(R2.RideDate)
+       FROM Rides R2
+       WHERE R2.RiderID = R1.RiderID
+      ); 
+
+6. Count the number of rides taken in each city?
+Ans. SELECT PickupLocation AS City, COUNT(*) AS TotalRides FROM Rides GROUP BY PickupLocation;
+
+7. List all rides where the distance was greater than 20 km?
+Ans. SELECT RideID, RiderID, DriverID, RideDate, PickupLocation, DropLocation, Distance, Fare, RideStatus FROM Rides WHERE Distance > 20;
+
+8. Identify the most preferred payment method?
+Ans. SELECT PaymentMethod, COUNT(*) AS UsageCount FROM Payments
+     GROUP BY PaymentMethod
+     ORDER BY UsageCount DESC
+     LIMIT 1;  (ensures only the most preferred method is returned)
+
+9. Find the top 3 highest-earning drivers?
+Ans. SELECT D.DriverID, D.FirstName, D.LastName, SUM(R.Fare) AS TotalEarnings FROM Drivers D
+     JOIN Rides R ON D.DriverID = R.DriverID
+     WHERE R.RideStatus = 'Completed'
+     GROUP BY D.DriverID, D.FirstName, D.LastName
+     ORDER BY TotalEarnings DESC
+     LIMIT 3;
+
+10. Retrieve details of all cancelled rides along with the rider's and driver's names?
+Ans.SELECT R.RideID, Rd.FirstName AS RiderFirstName, Rd.LastName AS RiderLastName, 
+       D.FirstName AS DriverFirstName, D.LastName AS DriverLastName,
+       R.PickupLocation, R.DropLocation, R.Distance, R.Fare FROM Rides R
+    JOIN Riders Rd ON R.RiderID = Rd.RiderID
+    JOIN Drivers D ON R.DriverID = D.DriverID
+    WHERE R.RideStatus = 'Cancelled';
