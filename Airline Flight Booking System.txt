@@ -1,0 +1,146 @@
+	 **Airline Flight Booking System**
+
+
+CREATE DATABASE-
+  CREATE DATABASE db_airlineflight
+
+ 
+CREATE TABLES-
+  CREATE TABLE Airlines (
+    airline_id INT PRIMARY KEY,
+    airline_name VARCHAR(100),
+    country VARCHAR(100),
+    iata_code VARCHAR(10)
+);
+
+  CREATE TABLE Airports (
+    airport_id INT PRIMARY KEY,
+    airport_name VARCHAR(100),
+    city VARCHAR(100),
+    country VARCHAR(100)
+);
+
+  CREATE TABLE Flights (
+    flight_id INT PRIMARY KEY,
+    airline_id INT,
+    flight_number VARCHAR(20) UNIQUE,
+    departure_airport_id INT,
+    arrival_airport_id INT,
+    departure_time DATETIME,
+    arrival_time DATETIME,
+    status VARCHAR(20) CHECK (status IN ('Scheduled', 'Delayed', 'Cancelled')),
+    FOREIGN KEY (airline_id) REFERENCES Airlines(airline_id),
+    FOREIGN KEY (departure_airport_id) REFERENCES Airports(airport_id),
+    FOREIGN KEY (arrival_airport_id) REFERENCES Airports(airport_id)
+);
+
+  CREATE TABLE Passengers (
+    passenger_id INT PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(100),
+    phone VARCHAR(20)
+);
+
+  CREATE TABLE Bookings (
+    booking_id INT PRIMARY KEY,
+    flight_id INT,
+    passenger_id INT,
+    booking_date DATETIME,
+    seat_class VARCHAR(20),
+    status VARCHAR(20) CHECK (status IN ('Confirmed', 'Cancelled')),
+    FOREIGN KEY (flight_id) REFERENCES Flights(flight_id),
+    FOREIGN KEY (passenger_id) REFERENCES Passengers(passenger_id)
+);
+
+  CREATE TABLE Payments (
+    payment_id INT PRIMARY KEY,
+    booking_id INT,
+    payment_date DATETIME,
+    amount DECIMAL(10,2),
+    payment_method VARCHAR(20) CHECK (payment_method IN ('Credit Card', 'PayPal', 'Cash')),
+    FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id)
+);
+
+
+INSERT VALUES INTO TABLES-
+  INSERT INTO Airlines ( airline_id , airline_name,  country, iata_code ) VALUES 
+  (1, 'Air India', 'India', 'AI'), 
+  (2, 'British Airways', 'United Kingdom', 'BA'), 
+  (3, 'Delta Airlines', 'USA', 'DL'), 
+  (4, 'Emirates', 'UAE', 'EK'), 
+  (5, 'Singapore Airlines', 'Singapore', 'SQ');
+
+  INSERT INTO Airports (airport_id, airport_name, city, country) VALUES
+  (1, 'JFK International', 'New York', 'USA'),
+  (2, 'Indira Gandhi International', 'New Delhi', 'India'),
+  (3, 'Heathrow Airport', 'London', 'United Kingdom'),
+  (4, 'Dubai International Airport', 'Dubai', 'UAE'),
+  (5, 'Changi Airport', 'Singapore', 'Singapore');
+
+  INSERT INTO Flights (flight_id, airline_id, flight_number, departure_airport_id, arrival_airport_id, departure_time, arrival_time, status) VALUES
+  (1, 1, 'AI101', 2, 1, '2025-05-20 08:00:00', '2025-05-20 18:00:00', 'Scheduled'),
+  (2, 2, 'BA202', 3, 4, '2025-05-21 09:30:00', '2025-05-21 19:00:00', 'Delayed');
+
+  INSERT INTO Passengers (passenger_id, first_name, last_name, email, phone) VALUES
+  (1, 'John', 'Doe', 'john.doe@example.com', '1234567890'),
+  (2, 'Jane', 'Smith', 'jane.smith@example.com', '0987654321');
+
+  INSERT INTO Bookings (booking_id, flight_id, passenger_id, booking_date, seat_class, status) VALUES
+  (1, 1, 1, '2025-05-18 14:00:00', 'Economy', 'Confirmed'),
+  (2, 2, 2, '2025-05-19 15:00:00', 'Business', 'Cancelled');
+
+  INSERT INTO Payments (payment_id, booking_id, payment_date, amount, payment_method) VALUES
+  (1, 1, '2025-05-18 14:30:00', 500.00, 'Credit Card'),
+  (2, 2, '2025-05-19 15:30:00', 1000.00, 'PayPal');
+
+
+Questions-
+ 1. Find the Total Number of Bookings for Each Flight
+ Ans. SELECT flight_id, COUNT(*) AS total_bookings FROM Bookings
+      GROUP BY flight_id;
+
+ 2. List All Passengers Who Have Booked a Specific Flight (e.g., Flight Number 'AI202')
+ Ans. SELECT Passengers.passenger_id, Passengers.first_name, Passengers.last_name, Passengers.email, Passengers.phone FROM Passengers
+      JOIN Bookings ON Passengers.passenger_id = Bookings.passenger_id
+      JOIN Flights ON Bookings.flight_id = Flights.flight_id
+      WHERE Flights.flight_number = 'AI202';
+
+ 3. Find the Total Number of Flights Departing from a Specific Airport (e.g., 'JFK')
+ Ans. SELECT departure_airport_id, COUNT(*) AS total_flights FROM Flights
+      WHERE departure_airport_id = (SELECT airport_id FROM Airports WHERE airport_name = 'JFK International')
+      GROUP BY departure_airport_id;
+
+ 4. Find the Flight with the Most Passengers Booked (Most Popular Flight)
+ Ans. SELECT flight_id, COUNT(*) AS total_passengers FROM Bookings
+      GROUP BY flight_id
+      ORDER BY total_passengers DESC
+      LIMIT 1;
+
+ 5. Get the Total Payment Amount for All Confirmed Bookings
+ Ans. SELECT SUM(amount) AS total_payment FROM Payments
+      JOIN Bookings ON Payments.booking_id = Bookings.booking_id
+      WHERE Bookings.status = 'Confirmed';
+
+ 6. List All Flights Departing After a Specific Date and Time (e.g., '2024-06-01 10:00:00')
+ Ans. SELECT * FROM Flights
+      WHERE departure_time > '2024-06-01 10:00:00';
+
+ 7. Find the Number of Bookings Made in Each Seat Class (e.g., Economy, Business)
+ Ans. SELECT seat_class, COUNT(*) AS total_bookings FROM Bookings
+      GROUP BY seat_class;
+
+ 8. List All Flights That Have Been Cancelled
+ Ans. SELECT * FROM Flights
+      WHERE status = 'Cancelled';
+
+ 9. Find the Average Payment Amount for Confirmed Bookings
+ Ans. SELECT AVG(amount) AS average_payment FROM Payments
+      JOIN Bookings ON Payments.booking_id = Bookings.booking_id
+      WHERE Bookings.status = 'Confirmed';
+
+ 10. Get the Total Number of Bookings and Total Payment Amount for Each Passenger
+ Ans. SELECT Passengers.passenger_id, Passengers.first_name, Passengers.last_name, COUNT(Bookings.booking_id) AS total_bookings, SUM(Payments.amount) AS total_payment FROM Passengers
+      LEFT JOIN Bookings ON Passengers.passenger_id = Bookings.passenger_id
+      LEFT JOIN Payments ON Bookings.booking_id = Payments.booking_id
+      GROUP BY Passengers.passenger_id, Passengers.first_name, Passengers.last_name;
